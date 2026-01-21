@@ -1,0 +1,8 @@
+genexomics:
+  buckets:
+    default:
+      Bucket: genexomics-runs
+      Prefix: runs/
+  quilt:
+    namespace: genexomics
+    registry: s3://genexomics-quilt

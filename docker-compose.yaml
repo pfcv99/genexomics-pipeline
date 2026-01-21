@@ -1,0 +1,45 @@
+version: "3.9"
+
+services:
+  localstack:
+    container_name: "${LOCALSTACK_DOCKER_NAME:-localstack-main}"
+    image: localstack/localstack:latest
+    ports:
+      - "127.0.0.1:4566:4566"       # main endpoint
+      - "127.0.0.1:4510-4559:4510-4559"
+    environment:
+      - SERVICES=s3                  # only start S3
+      - DEBUG=${DEBUG:-0}
+      - DATA_DIR=/var/lib/localstack
+    volumes:
+      - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - ./.env:/etc/localstack/.env  # ensures environment variables are loaded
+    command: >
+      sh -c "
+        localstack start -d &&
+        echo 'Waiting for S3 to be ready...' &&
+        # loop until S3 responds
+        until awslocal s3 ls >/dev/null 2>&1; do sleep 1; done &&
+        # create test buckets
+        awslocal s3 mb s3://genexomics-runs &&
+        awslocal s3 mb s3://genexomics-quilt &&
+        echo 'Buckets created: genexomics-runs, genexomics-quilt' &&
+        fg"
+
+  pipeline:
+    build: .
+    container_name: genexomics-pipeline
+    depends_on:
+      - localstack
+    env_file:
+      - .env
+    volumes:
+      - ./:/workspace:cached
+    working_dir: /workspace
+    tty: true
+    stdin_open: true
+    command: /bin/bash -lc "while sleep 3600; do :; done"
+
+volumes:
+  localstack_data:

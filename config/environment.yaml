@@ -1,0 +1,19 @@
+name: genexomics
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.11
+  - openjdk=17
+  - nextflow
+  - awscli
+  - pip
+  - pip:
+      - aioboto3
+      - boto3
+      - botocore
+      - quilt3
+      - pyyaml
+      - httpx
+      - tenacity
